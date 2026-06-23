@@ -8,70 +8,60 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{background:#0a0a0a;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
         .container{background:#111;padding:30px;border-radius:15px;text-align:center;border:1px solid #00ff96;box-shadow:0 0 30px rgba(0,255,150,0.2);max-width:500px;width:95%}
-        h2{color:#00ff96;margin-bottom:5px}
+        h2{color:#00ff96;margin-bottom:10px}
         .key{background:#000;color:#00ff96;font-family:monospace;font-size:20px;padding:20px;margin:20px 0;border-radius:10px;border:2px dashed #00ff96;word-break:break-all}
         button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer;margin:5px}
         button:hover{background:#00cc78}
-        .time{color:#ffaa00;font-size:13px;margin:10px 0}
-        .countdown{color:#ff5555;font-size:14px;font-weight:bold;margin:5px 0}
+        .status{color:#ffaa00;font-size:12px;margin:10px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🛡️ ANTI-AFK KEY</h2>
-        <p style="color:#888;font-size:12px">24 Hour Key - Copy and paste into script</p>
-        <div class="key" id="keyText">Loading...</div>
+        <h2>🛡️ YOUR UNIQUE KEY</h2>
+        <p style="color:#888;font-size:12px">Key tied to your IP - Resets daily</p>
+        <div class="key" id="keyText">Generating your key...</div>
         <button onclick="copyKey()">📋 COPY KEY</button>
-        <p class="time" id="timeText"></p>
-        <p class="countdown" id="countdownText"></p>
+        <p class="status" id="statusText"></p>
         <p class="info">
             📌 <b>How to use:</b><br>
-            1. Copy key above<br>
+            1. Copy your unique key<br>
             2. Paste into Roblox script<br>
-            3. Key expires after 24 hours<br>
-            4. Come back for new key
+            3. Key expires at midnight<br>
+            4. Each IP gets a different key
         </p>
     </div>
     <script>
-        function generateKey(){
-            var now = Date.now();
-            var expiry = now + (24*60*60*1000);
-            var random1 = Math.random().toString(36).substring(2,10);
-            var random2 = Math.random().toString(36).substring(2,10);
-            var key = "DEDSEC-" + expiry.toString(36).toUpperCase() + "-" + random1.toUpperCase() + "-" + random2.toUpperCase();
-            return {key:key, expiry:expiry};
-        }
-        function displayKey(kd){
-            document.getElementById('keyText').textContent = kd.key;
-            document.getElementById('timeText').textContent = 'Expires: ' + new Date(kd.expiry).toLocaleString();
-            function tick(){
-                var rem = kd.expiry - Date.now();
-                if(rem<=0){
-                    document.getElementById('countdownText').textContent = 'EXPIRED - REFRESH PAGE';
-                    document.getElementById('countdownText').style.color = '#ff3333';
-                    return;
-                }
-                var h=Math.floor(rem/3600000);
-                var m=Math.floor((rem%3600000)/60000);
-                var s=Math.floor((rem%60000)/1000);
-                document.getElementById('countdownText').textContent = 'Time left: '+h+'h '+m+'m '+s+'s';
-            }
-            tick();
-            setInterval(tick,1000);
-        }
+        var API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+        
         function copyKey(){
-            var k=document.getElementById('keyText').textContent;
-            navigator.clipboard.writeText(k).then(function(){alert('Copied!')});
+            var k = document.getElementById('keyText').textContent;
+            if(k && k !== 'Generating your key...' && k !== 'Failed'){
+                navigator.clipboard.writeText(k).then(function(){alert('Copied!')});
+            }
         }
-        var saved=localStorage.getItem('dedsec_key');
-        if(saved){
-            var data=JSON.parse(saved);
-            if(data.expiry>Date.now()){displayKey(data);}
-            else{var nk=generateKey();localStorage.setItem('dedsec_key',JSON.stringify(nk));displayKey(nk);}
-        }else{
-            var nk=generateKey();localStorage.setItem('dedsec_key',JSON.stringify(nk));displayKey(nk);
-        }
+        
+        // Lấy IP từ ipify rồi gọi API
+        fetch('https://api.ipify.org?format=json')
+            .then(function(r){return r.json()})
+            .then(function(data){
+                var ip = data.ip;
+                document.getElementById('statusText').textContent = 'IP: ' + ip + ' - Getting your key...';
+                return fetch(API_URL + '?action=generate&ip=' + encodeURIComponent(ip));
+            })
+            .then(function(r){return r.json()})
+            .then(function(data){
+                if(data.success){
+                    document.getElementById('keyText').textContent = data.key;
+                    document.getElementById('statusText').textContent = '✅ ' + data.message;
+                }else{
+                    throw new Error('Failed');
+                }
+            })
+            .catch(function(){
+                document.getElementById('keyText').textContent = 'Failed';
+                document.getElementById('statusText').textContent = '❌ Error. Try again.';
+            });
     </script>
 </body>
 </html>
