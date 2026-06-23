@@ -1,357 +1,166 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Key Generator - Anti-AFK Script</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            background: rgba(20, 20, 30, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(0, 255, 150, 0.15);
-            border: 1px solid #2a2a3a;
-            max-width: 550px;
-            width: 100%;
-        }
-        .logo {
-            font-size: 50px;
-            margin-bottom: 10px;
-        }
-        h1 {
-            background: linear-gradient(90deg, #00ff96, #00d4ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 26px;
-            margin-bottom: 5px;
-        }
-        h2 {
-            color: #888;
-            margin-bottom: 25px;
-            font-size: 13px;
-            font-weight: normal;
-        }
-        .step {
-            background: #111;
-            border: 1px solid #2a2a3a;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 12px;
-            text-align: left;
-        }
-        .step-number {
-            background: #00ff96;
-            color: #000;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: inline-block;
-            text-align: center;
-            line-height: 28px;
-            font-weight: bold;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-        .step-title {
-            font-weight: bold;
-            color: #fff;
-            font-size: 15px;
-            display: inline;
-        }
-        .step-desc {
-            color: #999;
-            font-size: 12px;
-            margin-top: 8px;
-            margin-left: 38px;
-        }
-        .lv-btn {
-            display: block;
-            width: 100%;
-            background: linear-gradient(90deg, #00ff96, #00d4ff);
-            color: #000;
-            border: none;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin: 12px 0;
-            text-decoration: none;
-            text-align: center;
-            transition: 0.3s;
-        }
-        .lv-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 255, 150, 0.3);
-        }
-        .lv-btn.completed {
-            background: #333 !important;
-            color: #666 !important;
-            pointer-events: none;
-        }
-        .lv-btn.completed::after {
-            content: " ✓";
-        }
-        .input-code {
-            width: 100%;
-            padding: 12px;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            color: #fff;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        .input-code:focus {
-            outline: none;
-            border-color: #00ff96;
-        }
-        .generate-btn {
-            width: 100%;
-            background: #00ff96;
-            color: #000;
-            border: none;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .generate-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-        }
-        .generate-btn:not(:disabled):hover {
-            background: #00cc78;
-            transform: translateY(-2px);
-        }
-        .key-box {
-            background: #000;
-            border: 2px dashed #00ff96;
-            padding: 25px;
-            margin: 20px 0;
-            border-radius: 12px;
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .key-box.show { display: block; }
-        .key-text {
-            font-family: 'Courier New', monospace;
-            font-size: 20px;
-            color: #00ff96;
-            word-break: break-all;
-            background: #0a0a0a;
-            padding: 12px;
-            border-radius: 6px;
-            margin: 10px 0;
-        }
-        .copy-btn {
-            background: #2a2a3a;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 25px;
-            font-size: 13px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 8px;
-            transition: 0.2s;
-        }
-        .copy-btn:hover { background: #3a3a4a; }
-        .expiry {
-            color: #ffaa00;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-        .countdown {
-            color: #ff5555;
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        .log {
-            color: #666;
-            font-size: 11px;
-            margin-top: 20px;
-        }
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">🛡️</div>
-        <h1>ANTI-AFK KEY SYSTEM</h1>
-        <h2>Key 24 Giờ - Qua Linkvertise Để Mở Khóa</h2>
-        
-        <!-- BƯỚC 1: LINKVERTISE -->
-        <div class="step" id="step1">
-            <span class="step-number">1</span>
-            <span class="step-title">Hoàn thành Linkvertise</span>
-            <p class="step-desc">Nhấn nút bên dưới, chờ 5-10 giây rồi nhấn "Continue" để mở khóa mã.</p>
-            <a href="https://link-to.net/XXXXX/YYYYY" target="_blank" class="lv-btn" id="lvButton" onclick="markLvDone()">
-                🔗 MỞ LINKVERTISE
-            </a>
-        </div>
-        
-        <!-- BƯỚC 2: NHẬP MÃ XÁC NHẬN -->
-        <div class="step hidden" id="step2">
-            <span class="step-number">2</span>
-            <span class="step-title">Nhập mã xác nhận</span>
-            <p class="step-desc">Sau khi hoàn thành Linkvertise, bạn sẽ nhận được mã. Nhập mã vào đây:</p>
-            <input type="text" class="input-code" id="confirmInput" placeholder="Nhập mã xác nhận..." maxlength="20">
-        </div>
-        
-        <!-- BƯỚC 3: TẠO KEY -->
-        <div class="step hidden" id="step3">
-            <span class="step-number">3</span>
-            <span class="step-title">Tạo Key</span>
-            <p class="step-desc">Mã xác nhận đúng! Nhấn nút để tạo key 24 giờ.</p>
-            <button class="generate-btn" id="generateBtn" onclick="generateKey()">
-                🔑 TẠO KEY NGAY
-            </button>
-        </div>
-        
-        <!-- KẾT QUẢ -->
-        <div class="key-box" id="keyBox">
-            <p style="color: #888; font-size: 11px; margin-bottom: 5px;">KEY CỦA BẠN (CÓ HIỆU LỰC 24 GIỜ):</p>
-            <div class="key-text" id="keyText"></div>
-            <button class="copy-btn" onclick="copyKey()">📋 COPY KEY</button>
-            <p class="expiry" id="expiryText"></p>
-            <p class="countdown" id="countdownText"></p>
-        </div>
-        
-        <p class="log" id="logText"></p>
-    </div>
+--[[ LOADER ANTI-AFK - KEY SYSTEM 24H ]]--
 
-    <script>
-        // ============================================
-        // CẤU HÌNH - THAY ĐỔI CÁC GIÁ TRỊ NÀY
-        // ============================================
-        const SECRET_SALT = "Dedsec2024SecretSalt!@#";   // Salt bí mật để tạo key
-        const VALID_CODES = ["DEDSEC", "VORTEX", "FLING"]; // Mã xác nhận hợp lệ (hiển thị sau Linkvertise)
-        
-        let linkvertiseDone = false;
-        
-        // ============================================
-        // ĐÁNH DẤU HOÀN THÀNH LINKVERTISE
-        // ============================================
-        function markLvDone() {
-            // Đợi 15 giây (thời gian người dùng làm Linkvertise)
-            setTimeout(() => {
-                linkvertiseDone = true;
-                document.getElementById('lvButton').classList.add('completed');
-                document.getElementById('lvButton').textContent = '✅ ĐÃ HOÀN THÀNH';
-                document.getElementById('step2').classList.remove('hidden');
-                document.getElementById('logText').textContent = '✅ Linkvertise hoàn thành! Nhập mã xác nhận.';
-            }, 15000);
-        }
-        
-        // ============================================
-        // KIỂM TRA MÃ XÁC NHẬN
-        // ============================================
-        document.getElementById('confirmInput').addEventListener('input', function() {
-            const code = this.value.toUpperCase();
-            if (VALID_CODES.includes(code)) {
-                document.getElementById('step3').classList.remove('hidden');
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('logText').textContent = '✅ Mã đúng! Nhấn Tạo Key.';
-            }
-        });
-        
-        // ============================================
-        // HÀM TẠO KEY
-        // ============================================
-        function generateKey() {
-            const now = Date.now();
-            const expiry = now + (24 * 60 * 60 * 1000); // 24 giờ
-            
-            // Tạo key duy nhất
-            const raw = now + "-" + expiry + "-" + SECRET_SALT + "-" + Math.random().toString(36).substring(2, 8);
-            const hashed = btoa(raw).replace(/[=+/]/g, '').substring(0, 36);
-            const finalKey = "DEDSEC-" + hashed.substring(0, 8) + "-" + hashed.substring(8, 16) + "-" + hashed.substring(16, 24) + "-" + hashed.substring(24, 32);
-            
-            // Lưu vào localStorage
-            const keyData = { key: finalKey, expiry: expiry, created: now };
-            localStorage.setItem('dedsec_afk_key', JSON.stringify(keyData));
-            
-            // Lưu danh sách key đã tạo (cho server kiểm tra sau này)
-            const allKeys = JSON.parse(localStorage.getItem('dedsec_all_keys') || '[]');
-            allKeys.push(keyData);
-            localStorage.setItem('dedsec_all_keys', JSON.stringify(allKeys));
-            
-            // Hiển thị
-            document.getElementById('keyText').textContent = finalKey;
-            document.getElementById('keyBox').classList.add('show');
-            document.getElementById('expiryText').textContent = '⏰ Hết hạn: ' + new Date(expiry).toLocaleString('vi-VN');
-            document.getElementById('logText').textContent = '✅ Key tạo thành công! Copy và dán vào script.';
-            
-            // Đếm ngược
-            updateCountdown(expiry);
-            const countdownInterval = setInterval(() => {
-                if (!updateCountdown(expiry)) clearInterval(countdownInterval);
-            }, 1000);
-        }
-        
-        function updateCountdown(expiry) {
-            const remaining = expiry - Date.now();
-            if (remaining <= 0) {
-                document.getElementById('countdownText').textContent = '❌ KEY ĐÃ HẾT HẠN - TẠO KEY MỚI';
-                document.getElementById('countdownText').style.color = '#ff3333';
-                return false;
-            }
-            const h = Math.floor(remaining / 3600000);
-            const m = Math.floor((remaining % 3600000) / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
-            document.getElementById('countdownText').textContent = `⏳ Còn lại: ${h}h ${m}m ${s}s`;
-            return true;
-        }
-        
-        function copyKey() {
-            const key = document.getElementById('keyText').textContent;
-            if (key) {
-                navigator.clipboard.writeText(key).then(() => {
-                    alert('✅ Đã copy key:\n' + key);
-                });
-            }
-        }
-        
-        // ============================================
-        // KIỂM TRA KEY CŨ KHI TẢI TRANG
-        // ============================================
-        window.onload = function() {
-            const saved = localStorage.getItem('dedsec_afk_key');
-            if (saved) {
-                const data = JSON.parse(saved);
-                if (data.expiry > Date.now()) {
-                    document.getElementById('keyText').textContent = data.key;
-                    document.getElementById('keyBox').classList.add('show');
-                    document.getElementById('expiryText').textContent = '⏰ Hết hạn: ' + new Date(data.expiry).toLocaleString('vi-VN');
-                    updateCountdown(data.expiry);
-                    const countdownInterval = setInterval(() => {
-                        if (!updateCountdown(data.expiry)) clearInterval(countdownInterval);
-                    }, 1000);
-                    document.getElementById('logText').textContent = '📋 Key cũ vẫn còn hạn, không cần tạo mới!';
-                } else {
-                    document.getElementById('logText').textContent = '⚠️ Key cũ hết hạn, vui lòng tạo key mới.';
-                }
-            }
-        };
-    </script>
-</body>
-</html>
+local SECRET = "Dedsec2024SecretKey!@#$%^&*()"
+
+-- Hàm giải mã key
+local function DecryptKey(Encrypted, Key)
+    local Raw = game:GetService("HttpService"):Base64Decode(Encrypted .. "==")
+    local Result = {}
+    for i = 1, #Raw do
+        local KeyChar = Key:byte((i - 1) % #Key + 1)
+        table.insert(Result, string.char(Raw:byte(i) ~ KeyChar))
+    end
+    return table.concat(Result)
+end
+
+-- Kiểm tra key
+local function CheckKey(UserKey)
+    if not UserKey or #UserKey < 20 then return false, "INVALID" end
+    
+    -- Bỏ tiền tố DEDSEC-
+    local KeyBody = UserKey:gsub("DEDSEC%-", "")
+    if #KeyBody < 20 then return false, "INVALID" end
+    
+    -- Giải mã
+    local ok, Decoded = pcall(function() return DecryptKey(KeyBody, SECRET) end)
+    if not ok or not Decoded then return false, "INVALID" end
+    
+    -- Tách timestamp hết hạn
+    local Parts = {}
+    for Part in Decoded:gmatch("[^-]+") do
+        table.insert(Parts, Part)
+    end
+    
+    if #Parts < 1 then return false, "INVALID" end
+    local Expiry = tonumber(Parts[1])
+    if not Expiry then return false, "INVALID" end
+    
+    -- Kiểm tra hết hạn (chuyển ms sang giây)
+    local CurrentTime = os.time() * 1000
+    if CurrentTime > Expiry then
+        return false, "EXPIRED"
+    end
+    
+    local Remaining = math.floor((Expiry - CurrentTime) / 3600000)
+    return true, Remaining
+end
+
+-- Tải script chính
+local function LoadScript()
+    local Code = game:HttpGet("https://raw.githubusercontent.com/USERNAME/REPO/main/encrypted.txt")
+    local Dec = {}
+    for i = 1, #Code do
+        table.insert(Dec, string.char(Code:byte(i) ~ SECRET:byte((i-1) % #SECRET + 1)))
+    end
+    local Func = loadstring(table.concat(Dec))
+    if Func then Func() end
+end
+
+-- GUI Nhập Key
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "KeySystem"
+Gui.Parent = game:GetService("CoreGui")
+if syn and syn.protect_gui then syn.protect_gui(Gui) end
+
+local F = Instance.new("Frame")
+F.Size = UDim2.new(0, 380, 0, 200)
+F.Position = UDim2.new(0.5, -190, 0.4, -100)
+F.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
+F.BorderSizePixel = 0
+F.Parent = Gui
+Instance.new("UICorner", F).CornerRadius = UDim.new(0, 10)
+
+local T = Instance.new("TextLabel")
+T.Size = UDim2.new(1, 0, 0, 35)
+T.Position = UDim2.new(0, 0, 0, 20)
+T.BackgroundTransparency = 1
+T.Font = Enum.Font.GothamBold
+T.Text = "🔑 NHẬP KEY 24 GIỜ"
+T.TextColor3 = Color3.fromRGB(0, 255, 150)
+T.TextSize = 16
+T.Parent = F
+
+local S = Instance.new("TextLabel")
+S.Size = UDim2.new(1, 0, 0, 18)
+S.Position = UDim2.new(0, 0, 0, 50)
+S.BackgroundTransparency = 1
+S.Font = Enum.Font.GothamMedium
+S.Text = "Lay key: https://cloudvuacc-gif.github.io/key-generator/"
+S.TextColor3 = Color3.fromRGB(150, 150, 200)
+S.TextSize = 10
+S.Parent = F
+
+local I = Instance.new("TextBox")
+I.Size = UDim2.new(1, -40, 0, 38)
+I.Position = UDim2.new(0, 20, 0, 75)
+I.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
+I.BorderSizePixel = 0
+I.Font = Enum.Font.Code
+I.PlaceholderText = "Dan key vao day..."
+I.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
+I.TextColor3 = Color3.fromRGB(0, 255, 150)
+I.TextSize = 12
+I.Parent = F
+Instance.new("UICorner", I).CornerRadius = UDim.new(0, 6)
+
+local B = Instance.new("TextButton")
+B.Size = UDim2.new(1, -40, 0, 38)
+B.Position = UDim2.new(0, 20, 0, 120)
+B.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+B.BorderSizePixel = 0
+B.Font = Enum.Font.GothamBold
+B.Text = "✅ XAC NHAN"
+B.TextColor3 = Color3.fromRGB(255, 255, 255)
+B.TextSize = 14
+B.AutoButtonColor = false
+B.Parent = F
+Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
+
+local St = Instance.new("TextLabel")
+St.Size = UDim2.new(1, -40, 0, 20)
+St.Position = UDim2.new(0, 20, 0, 165)
+St.BackgroundTransparency = 1
+St.Font = Enum.Font.GothamMedium
+St.Text = ""
+St.TextColor3 = Color3.fromRGB(255, 255, 255)
+St.TextSize = 11
+St.TextXAlignment = Enum.TextXAlignment.Center
+St.Parent = F
+
+B.MouseButton1Click:Connect(function()
+    local Key = I.Text:gsub("%s+", ""):upper()
+    local Valid, Info = CheckKey(Key)
+    if Valid then
+        St.Text = "✅ Key dung! Con " .. Info .. "h. Dang tai..."
+        St.TextColor3 = Color3.fromRGB(0, 255, 0)
+        task.wait(1.5)
+        Gui:Destroy()
+        LoadScript()
+    elseif Info == "EXPIRED" then
+        St.Text = "❌ Key het han! Lay key moi."
+        St.TextColor3 = Color3.fromRGB(255, 50, 50)
+    else
+        St.Text = "❌ Key khong hop le!"
+        St.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
+
+I.FocusLost:Connect(function(EP)
+    if EP then
+        local Key = I.Text:gsub("%s+", ""):upper()
+        local Valid, Info = CheckKey(Key)
+        if Valid then
+            St.Text = "✅ Key dung! Con " .. Info .. "h. Dang tai..."
+            St.TextColor3 = Color3.fromRGB(0, 255, 0)
+            task.wait(1.5)
+            Gui:Destroy()
+            LoadScript()
+        elseif Info == "EXPIRED" then
+            St.Text = "❌ Key het han!"
+            St.TextColor3 = Color3.fromRGB(255, 50, 50)
+        else
+            St.Text = "❌ Key sai!"
+            St.TextColor3 = Color3.fromRGB(255, 50, 50)
+        end
+    end
+end)
