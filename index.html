@@ -9,86 +9,77 @@
         body{background:#0a0a0a;color:#fff;font-family:'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
         .container{background:#111;padding:30px;border-radius:15px;text-align:center;border:1px solid #00ff96;box-shadow:0 0 30px rgba(0,255,150,0.2);max-width:500px;width:95%}
         h2{color:#00ff96;margin-bottom:10px}
-        .key{background:#000;color:#00ff96;font-family:monospace;font-size:20px;padding:20px;margin:20px 0;border-radius:10px;border:2px dashed #00ff96;word-break:break-all;min-height:30px}
-        button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer;margin:5px}
+        .key{background:#000;color:#00ff96;font-family:monospace;font-size:20px;padding:20px;margin:20px 0;border-radius:10px;border:2px dashed #00ff96;word-break:break-all}
+        button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer}
         button:hover{background:#00cc78}
-        .status{color:#ffaa00;font-size:12px;margin:10px 0}
+        .lock-btn{display:block;width:100%;background:linear-gradient(90deg,#00ff96,#00d4ff);color:#000;padding:16px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
+        .lock-btn:hover{transform:scale(1.02)}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .blocked{color:#ff3333;font-size:16px;padding:30px}
-        .lv-btn{display:block;width:100%;background:linear-gradient(90deg,#00ff96,#00d4ff);color:#000;padding:14px;font-size:15px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
+        .lock-icon{font-size:60px;display:block;margin:20px 0}
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <!-- Nội dung sẽ được JS điền vào -->
-    </div>
+    <div class="container" id="main"></div>
 
     <script>
         var API_URL = "https://script.google.com/macros/s/AKfycbzgs-q5z8hx10YmLGSPuiyGnA1pTyHnfDiKtT9ccVMGM04pti0e0itmmMq2B6FRd6Y_/exec";
         var LINKVERTISE_URL = "https://link-center.net/6819549/eLZPTLtWBC8k";
+        var hash = new URLSearchParams(window.location.search).get('hash');
         
-        // Lấy hash từ URL
-        var urlParams = new URLSearchParams(window.location.search);
-        var hash = urlParams.get('hash');
-        
-        function showKey(key){
-            document.getElementById('mainContainer').innerHTML = 
+        // ============================================
+        // HIỂN THỊ KEY (CHỈ KHI CÓ HASH HỢP LỆ)
+        // ============================================
+        function showKeyPage(key) {
+            document.getElementById('main').innerHTML = 
                 '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Key tied to your IP - Resets daily</p>' +
-                '<div class="key">' + key + '</div>' +
+                '<p style="color:#888;font-size:12px">Key tied to your IP - 24 hours</p>' +
+                '<div class="key" id="keyText">' + key + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p class="status" id="statusText"></p>' +
-                '<p class="info">📌 <b>How to use:</b><br>1. Copy your unique key<br>2. Paste into Roblox script<br>3. Key expires at midnight</p>';
-        }
-        
-        function showBlocked(){
-            document.getElementById('mainContainer').innerHTML = 
-                '<h2>🔒 ACCESS REQUIRED</h2>' +
-                '<div class="blocked">⚠️ You must go through verification to get your key!</div>' +
-                '<a href="' + LINKVERTISE_URL + '" class="lv-btn">🔗 CLICK HERE TO UNLOCK KEY</a>' +
-                '<p class="info" style="margin-top:15px">After completing verification, you will be redirected back with your key.</p>';
-        }
-        
-        function copyKey(){
-            var k = document.querySelector('.key');
-            if(k && k.textContent && k.textContent !== 'Generating...'){
-                navigator.clipboard.writeText(k.textContent).then(function(){alert('✅ Key copied!')});
-            }
+                '<p style="color:#ffaa00;font-size:12px;margin-top:10px">Key expires at midnight</p>' +
+                '<p class="info">Paste this key into your Roblox script</p>';
         }
         
         // ============================================
-        // KIỂM TRA HASH HỢP LỆ
+        // HIỂN THỊ TRANG KHÓA (KHÔNG CÓ HASH)
         // ============================================
-        if (hash && hash.length > 20) {
-            // Có hash - Kiểm tra hash với API
-            fetch(API_URL + '?action=check_hash&hash=' + encodeURIComponent(hash))
-                .then(function(r){return r.json()})
-                .then(function(data){
-                    if(data.valid){
-                        // Hash hợp lệ - Lấy key
-                        return fetch('https://api.ipify.org?format=json')
-                            .then(function(r){return r.json()})
-                            .then(function(ipData){
-                                return fetch(API_URL + '?action=generate&ip=' + encodeURIComponent(ipData.ip) + '&hash=' + encodeURIComponent(hash));
-                            })
-                            .then(function(r){return r.json()});
+        function showLockPage() {
+            document.getElementById('main').innerHTML = 
+                '<span class="lock-icon">🔒</span>' +
+                '<h2>VERIFICATION REQUIRED</h2>' +
+                '<p style="color:#888;font-size:13px">You must complete verification to get your key</p>' +
+                '<a href="' + LINKVERTISE_URL + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
+                '<p class="info">Click the button above → Complete verification → Get your unique key</p>';
+        }
+        
+        function copyKey() {
+            var k = document.getElementById('keyText').textContent;
+            if (k) navigator.clipboard.writeText(k).then(function(){ alert('✅ Key copied!'); });
+        }
+        
+        // ============================================
+        // LOGIC CHÍNH
+        // ============================================
+        if (hash && hash.length > 10) {
+            // Có hash - Lấy key
+            fetch('https://api.ipify.org?format=json')
+                .then(function(r){ return r.json(); })
+                .then(function(ipData) {
+                    return fetch(API_URL + '?action=generate&ip=' + encodeURIComponent(ipData.ip));
+                })
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        showKeyPage(data.key);
                     } else {
-                        throw new Error('Invalid hash');
+                        showLockPage();
                     }
                 })
-                .then(function(data){
-                    if(data.success){
-                        showKey(data.key);
-                    } else {
-                        showBlocked();
-                    }
-                })
-                .catch(function(){
-                    showBlocked();
+                .catch(function() {
+                    showLockPage();
                 });
         } else {
-            // Không có hash - Chặn
-            showBlocked();
+            // Không có hash - Khóa
+            showLockPage();
         }
     </script>
 </body>
