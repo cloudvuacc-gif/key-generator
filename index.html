@@ -1,166 +1,216 @@
---[[ LOADER ANTI-AFK - KEY SYSTEM 24H ]]--
+--[[ 
+   LOADER - KIỂM TRA KEY 24H + LOAD MENU ANTI-AFK
+   Key tạo từ web sẽ được kiểm tra và giải mã
+--]]
 
-local SECRET = "Dedsec2024SecretKey!@#$%^&*()"
+local SECRET_KEY = "Dedsec2024SecretKey!@#$%^&*()"
 
--- Hàm giải mã key
-local function DecryptKey(Encrypted, Key)
-    local Raw = game:GetService("HttpService"):Base64Decode(Encrypted .. "==")
+-- ============================================
+-- HÀM GIẢI MÃ KEY
+-- ============================================
+local function DecryptKey(EncryptedBase64)
+    local HttpService = game:GetService("HttpService")
+    
+    -- Decode Base64
+    local Raw
+    pcall(function()
+        Raw = HttpService:Base64Decode(EncryptedBase64 .. "==")
+    end)
+    if not Raw then return nil end
+    
+    -- XOR decrypt
     local Result = {}
     for i = 1, #Raw do
-        local KeyChar = Key:byte((i - 1) % #Key + 1)
+        local KeyChar = SECRET_KEY:byte((i - 1) % #SECRET_KEY + 1)
         table.insert(Result, string.char(Raw:byte(i) ~ KeyChar))
     end
+    
     return table.concat(Result)
 end
 
--- Kiểm tra key
+-- ============================================
+-- HÀM KIỂM TRA KEY
+-- ============================================
 local function CheckKey(UserKey)
-    if not UserKey or #UserKey < 20 then return false, "INVALID" end
+    if not UserKey or #UserKey < 30 then
+        return false, "INVALID"
+    end
     
-    -- Bỏ tiền tố DEDSEC-
-    local KeyBody = UserKey:gsub("DEDSEC%-", "")
-    if #KeyBody < 20 then return false, "INVALID" end
+    -- Xóa tiền tố DEDSEC- và nối lại
+    local CleanKey = UserKey:gsub("DEDSEC%-", ""):gsub("%-", "")
+    
+    if #CleanKey < 30 then
+        return false, "INVALID"
+    end
     
     -- Giải mã
-    local ok, Decoded = pcall(function() return DecryptKey(KeyBody, SECRET) end)
-    if not ok or not Decoded then return false, "INVALID" end
+    local Decrypted = DecryptKey(CleanKey)
+    if not Decrypted then
+        return false, "INVALID"
+    end
     
-    -- Tách timestamp hết hạn
+    -- Tách expiry (phần đầu trước dấu |)
     local Parts = {}
-    for Part in Decoded:gmatch("[^-]+") do
+    for Part in Decrypted:gmatch("[^|]+") do
         table.insert(Parts, Part)
     end
     
-    if #Parts < 1 then return false, "INVALID" end
-    local Expiry = tonumber(Parts[1])
-    if not Expiry then return false, "INVALID" end
-    
-    -- Kiểm tra hết hạn (chuyển ms sang giây)
-    local CurrentTime = os.time() * 1000
-    if CurrentTime > Expiry then
-        return false, "EXPIRED"
+    if #Parts < 1 then
+        return false, "INVALID"
     end
     
-    local Remaining = math.floor((Expiry - CurrentTime) / 3600000)
-    return true, Remaining
+    local Expiry = tonumber(Parts[1])
+    if not Expiry then
+        return false, "INVALID"
+    end
+    
+    -- Kiểm tra hết hạn
+    local CurrentTime = os.time() * 1000 -- milliseconds
+    
+    if CurrentTime > Expiry then
+        local HetHan = os.date("%H:%M %d/%m/%Y", Expiry / 1000)
+        return false, "EXPIRED|" .. HetHan
+    end
+    
+    local RemainingHours = math.floor((Expiry - CurrentTime) / 3600000)
+    local RemainingMins = math.floor(((Expiry - CurrentTime) % 3600000) / 60000)
+    
+    return true, RemainingHours .. "h " .. RemainingMins .. "m"
 end
 
--- Tải script chính
-local function LoadScript()
+-- ============================================
+-- HÀM TẢI MENU CHÍNH
+-- ============================================
+local function LoadMainScript()
+    -- Đây là code menu Anti-AFK đã mã hóa của bạn
+    -- Giải mã và chạy
     local Code = game:HttpGet("https://raw.githubusercontent.com/USERNAME/REPO/main/encrypted.txt")
     local Dec = {}
     for i = 1, #Code do
-        table.insert(Dec, string.char(Code:byte(i) ~ SECRET:byte((i-1) % #SECRET + 1)))
+        table.insert(Dec, string.char(Code:byte(i) ~ SECRET_KEY:byte((i-1) % #SECRET_KEY + 1)))
     end
     local Func = loadstring(table.concat(Dec))
     if Func then Func() end
 end
 
--- GUI Nhập Key
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "KeySystem"
-Gui.Parent = game:GetService("CoreGui")
-if syn and syn.protect_gui then syn.protect_gui(Gui) end
-
-local F = Instance.new("Frame")
-F.Size = UDim2.new(0, 380, 0, 200)
-F.Position = UDim2.new(0.5, -190, 0.4, -100)
-F.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
-F.BorderSizePixel = 0
-F.Parent = Gui
-Instance.new("UICorner", F).CornerRadius = UDim.new(0, 10)
-
-local T = Instance.new("TextLabel")
-T.Size = UDim2.new(1, 0, 0, 35)
-T.Position = UDim2.new(0, 0, 0, 20)
-T.BackgroundTransparency = 1
-T.Font = Enum.Font.GothamBold
-T.Text = "🔑 NHẬP KEY 24 GIỜ"
-T.TextColor3 = Color3.fromRGB(0, 255, 150)
-T.TextSize = 16
-T.Parent = F
-
-local S = Instance.new("TextLabel")
-S.Size = UDim2.new(1, 0, 0, 18)
-S.Position = UDim2.new(0, 0, 0, 50)
-S.BackgroundTransparency = 1
-S.Font = Enum.Font.GothamMedium
-S.Text = "Lay key: https://cloudvuacc-gif.github.io/key-generator/"
-S.TextColor3 = Color3.fromRGB(150, 150, 200)
-S.TextSize = 10
-S.Parent = F
-
-local I = Instance.new("TextBox")
-I.Size = UDim2.new(1, -40, 0, 38)
-I.Position = UDim2.new(0, 20, 0, 75)
-I.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
-I.BorderSizePixel = 0
-I.Font = Enum.Font.Code
-I.PlaceholderText = "Dan key vao day..."
-I.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
-I.TextColor3 = Color3.fromRGB(0, 255, 150)
-I.TextSize = 12
-I.Parent = F
-Instance.new("UICorner", I).CornerRadius = UDim.new(0, 6)
-
-local B = Instance.new("TextButton")
-B.Size = UDim2.new(1, -40, 0, 38)
-B.Position = UDim2.new(0, 20, 0, 120)
-B.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-B.BorderSizePixel = 0
-B.Font = Enum.Font.GothamBold
-B.Text = "✅ XAC NHAN"
-B.TextColor3 = Color3.fromRGB(255, 255, 255)
-B.TextSize = 14
-B.AutoButtonColor = false
-B.Parent = F
-Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
-
-local St = Instance.new("TextLabel")
-St.Size = UDim2.new(1, -40, 0, 20)
-St.Position = UDim2.new(0, 20, 0, 165)
-St.BackgroundTransparency = 1
-St.Font = Enum.Font.GothamMedium
-St.Text = ""
-St.TextColor3 = Color3.fromRGB(255, 255, 255)
-St.TextSize = 11
-St.TextXAlignment = Enum.TextXAlignment.Center
-St.Parent = F
-
-B.MouseButton1Click:Connect(function()
-    local Key = I.Text:gsub("%s+", ""):upper()
-    local Valid, Info = CheckKey(Key)
-    if Valid then
-        St.Text = "✅ Key dung! Con " .. Info .. "h. Dang tai..."
-        St.TextColor3 = Color3.fromRGB(0, 255, 0)
-        task.wait(1.5)
-        Gui:Destroy()
-        LoadScript()
-    elseif Info == "EXPIRED" then
-        St.Text = "❌ Key het han! Lay key moi."
-        St.TextColor3 = Color3.fromRGB(255, 50, 50)
-    else
-        St.Text = "❌ Key khong hop le!"
-        St.TextColor3 = Color3.fromRGB(255, 50, 50)
-    end
-end)
-
-I.FocusLost:Connect(function(EP)
-    if EP then
-        local Key = I.Text:gsub("%s+", ""):upper()
+-- ============================================
+-- GIAO DIỆN NHẬP KEY
+-- ============================================
+local function ShowKeyGUI()
+    local Gui = Instance.new("ScreenGui")
+    Gui.Name = "KeySystem"
+    Gui.ResetOnSpawn = false
+    Gui.Parent = game:GetService("CoreGui")
+    pcall(function() if syn and syn.protect_gui then syn.protect_gui(Gui) end end)
+    
+    local F = Instance.new("Frame")
+    F.Size = UDim2.new(0, 400, 0, 220)
+    F.Position = UDim2.new(0.5, -200, 0.4, -110)
+    F.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
+    F.BorderSizePixel = 0
+    F.Parent = Gui
+    Instance.new("UICorner", F).CornerRadius = UDim.new(0, 12)
+    
+    local Glow = Instance.new("UIStroke")
+    Glow.Thickness = 1.5
+    Glow.Color = Color3.fromRGB(0, 255, 150)
+    Glow.Transparency = 0.5
+    Glow.Parent = F
+    
+    local Logo = Instance.new("TextLabel")
+    Logo.Size = UDim2.new(1, 0, 0, 30)
+    Logo.Position = UDim2.new(0, 0, 0, 15)
+    Logo.BackgroundTransparency = 1
+    Logo.Font = Enum.Font.GothamBold
+    Logo.Text = "🛡️ ANTI-AFK KEY SYSTEM"
+    Logo.TextColor3 = Color3.fromRGB(0, 255, 150)
+    Logo.TextSize = 16
+    Logo.Parent = F
+    
+    local Sub = Instance.new("TextLabel")
+    Sub.Size = UDim2.new(1, 0, 0, 18)
+    Sub.Position = UDim2.new(0, 0, 0, 42)
+    Sub.BackgroundTransparency = 1
+    Sub.Font = Enum.Font.GothamMedium
+    Sub.Text = "Nhap key 24 gio tu trang web"
+    Sub.TextColor3 = Color3.fromRGB(150, 150, 150)
+    Sub.TextSize = 11
+    Sub.Parent = F
+    
+    local Input = Instance.new("TextBox")
+    Input.Size = UDim2.new(1, -40, 0, 40)
+    Input.Position = UDim2.new(0, 20, 0, 68)
+    Input.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
+    Input.BorderSizePixel = 0
+    Input.Font = Enum.Font.Code
+    Input.PlaceholderText = "Dan key vao day..."
+    Input.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
+    Input.TextColor3 = Color3.fromRGB(0, 255, 150)
+    Input.TextSize = 13
+    Input.ClearTextOnFocus = false
+    Input.Parent = F
+    Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 8)
+    
+    local Submit = Instance.new("TextButton")
+    Submit.Size = UDim2.new(1, -40, 0, 40)
+    Submit.Position = UDim2.new(0, 20, 0, 115)
+    Submit.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+    Submit.BorderSizePixel = 0
+    Submit.Font = Enum.Font.GothamBold
+    Submit.Text = "✅ XAC NHAN KEY"
+    Submit.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Submit.TextSize = 14
+    Submit.AutoButtonColor = false
+    Submit.Parent = F
+    Instance.new("UICorner", Submit).CornerRadius = UDim.new(0, 8)
+    
+    local Status = Instance.new("TextLabel")
+    Status.Size = UDim2.new(1, -40, 0, 20)
+    Status.Position = UDim2.new(0, 20, 0, 162)
+    Status.BackgroundTransparency = 1
+    Status.Font = Enum.Font.GothamMedium
+    Status.Text = "🔗 Lay key: qua Linkvertise"
+    Status.TextColor3 = Color3.fromRGB(120, 120, 200)
+    Status.TextSize = 10
+    Status.TextXAlignment = Enum.TextXAlignment.Center
+    Status.Parent = F
+    
+    local function ProcessKey(Key)
+        Key = Key:gsub("%s+", ""):upper()
+        if Key == "" then
+            Status.Text = "❌ Vui long nhap key!"
+            Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+            return
+        end
+        
         local Valid, Info = CheckKey(Key)
+        
         if Valid then
-            St.Text = "✅ Key dung! Con " .. Info .. "h. Dang tai..."
-            St.TextColor3 = Color3.fromRGB(0, 255, 0)
-            task.wait(1.5)
+            Status.Text = "✅ Key hop le! Con " .. Info .. ". Dang tai..."
+            Status.TextColor3 = Color3.fromRGB(0, 255, 0)
+            task.wait(2)
             Gui:Destroy()
-            LoadScript()
-        elseif Info == "EXPIRED" then
-            St.Text = "❌ Key het han!"
-            St.TextColor3 = Color3.fromRGB(255, 50, 50)
+            LoadMainScript()
+        elseif Info:find("EXPIRED") then
+            local HetHan = Info:gsub("EXPIRED|", "")
+            Status.Text = "❌ Key het han luc " .. HetHan .. "! Lay key moi."
+            Status.TextColor3 = Color3.fromRGB(255, 50, 50)
         else
-            St.Text = "❌ Key sai!"
-            St.TextColor3 = Color3.fromRGB(255, 50, 50)
+            Status.Text = "❌ Key khong hop le! Kiem tra lai."
+            Status.TextColor3 = Color3.fromRGB(255, 50, 50)
         end
     end
-end)
+    
+    Submit.MouseButton1Click:Connect(function()
+        ProcessKey(Input.Text)
+    end)
+    
+    Input.FocusLost:Connect(function(EnterPressed)
+        if EnterPressed then ProcessKey(Input.Text) end
+    end)
+end
+
+-- ============================================
+-- KHỞI ĐỘNG
+-- ============================================
+ShowKeyGUI()
