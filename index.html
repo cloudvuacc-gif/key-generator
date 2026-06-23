@@ -1,216 +1,128 @@
---[[ 
-   LOADER - KIỂM TRA KEY 24H + LOAD MENU ANTI-AFK
-   Key tạo từ web sẽ được kiểm tra và giải mã
---]]
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key - Anti-AFK Script</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #111;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #00ff96;
+            box-shadow: 0 0 30px rgba(0,255,150,0.2);
+            max-width: 500px;
+            width: 95%;
+        }
+        h2 { color: #00ff96; margin-bottom: 5px; }
+        .key {
+            background: #000;
+            color: #00ff96;
+            font-family: monospace;
+            font-size: 18px;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px dashed #00ff96;
+            word-break: break-all;
+        }
+        button {
+            background: #00ff96;
+            color: #000;
+            border: none;
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover { background: #00cc78; }
+        .time { color: #ffaa00; font-size: 13px; margin: 10px 0; }
+        .info { color: #888; font-size: 11px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🛡️ KEY ANTI-AFK 24 GIỜ</h2>
+        <div class="key" id="keyText">Đang tạo key...</div>
+        <button onclick="copyKey()">📋 COPY KEY</button>
+        <p class="time" id="timeText"></p>
+        <p class="info">Dán key vào script Roblox để sử dụng</p>
+    </div>
 
-local SECRET_KEY = "Dedsec2024SecretKey!@#$%^&*()"
-
--- ============================================
--- HÀM GIẢI MÃ KEY
--- ============================================
-local function DecryptKey(EncryptedBase64)
-    local HttpService = game:GetService("HttpService")
-    
-    -- Decode Base64
-    local Raw
-    pcall(function()
-        Raw = HttpService:Base64Decode(EncryptedBase64 .. "==")
-    end)
-    if not Raw then return nil end
-    
-    -- XOR decrypt
-    local Result = {}
-    for i = 1, #Raw do
-        local KeyChar = SECRET_KEY:byte((i - 1) % #SECRET_KEY + 1)
-        table.insert(Result, string.char(Raw:byte(i) ~ KeyChar))
-    end
-    
-    return table.concat(Result)
-end
-
--- ============================================
--- HÀM KIỂM TRA KEY
--- ============================================
-local function CheckKey(UserKey)
-    if not UserKey or #UserKey < 30 then
-        return false, "INVALID"
-    end
-    
-    -- Xóa tiền tố DEDSEC- và nối lại
-    local CleanKey = UserKey:gsub("DEDSEC%-", ""):gsub("%-", "")
-    
-    if #CleanKey < 30 then
-        return false, "INVALID"
-    end
-    
-    -- Giải mã
-    local Decrypted = DecryptKey(CleanKey)
-    if not Decrypted then
-        return false, "INVALID"
-    end
-    
-    -- Tách expiry (phần đầu trước dấu |)
-    local Parts = {}
-    for Part in Decrypted:gmatch("[^|]+") do
-        table.insert(Parts, Part)
-    end
-    
-    if #Parts < 1 then
-        return false, "INVALID"
-    end
-    
-    local Expiry = tonumber(Parts[1])
-    if not Expiry then
-        return false, "INVALID"
-    end
-    
-    -- Kiểm tra hết hạn
-    local CurrentTime = os.time() * 1000 -- milliseconds
-    
-    if CurrentTime > Expiry then
-        local HetHan = os.date("%H:%M %d/%m/%Y", Expiry / 1000)
-        return false, "EXPIRED|" .. HetHan
-    end
-    
-    local RemainingHours = math.floor((Expiry - CurrentTime) / 3600000)
-    local RemainingMins = math.floor(((Expiry - CurrentTime) % 3600000) / 60000)
-    
-    return true, RemainingHours .. "h " .. RemainingMins .. "m"
-end
-
--- ============================================
--- HÀM TẢI MENU CHÍNH
--- ============================================
-local function LoadMainScript()
-    -- Đây là code menu Anti-AFK đã mã hóa của bạn
-    -- Giải mã và chạy
-    local Code = game:HttpGet("https://raw.githubusercontent.com/USERNAME/REPO/main/encrypted.txt")
-    local Dec = {}
-    for i = 1, #Code do
-        table.insert(Dec, string.char(Code:byte(i) ~ SECRET_KEY:byte((i-1) % #SECRET_KEY + 1)))
-    end
-    local Func = loadstring(table.concat(Dec))
-    if Func then Func() end
-end
-
--- ============================================
--- GIAO DIỆN NHẬP KEY
--- ============================================
-local function ShowKeyGUI()
-    local Gui = Instance.new("ScreenGui")
-    Gui.Name = "KeySystem"
-    Gui.ResetOnSpawn = false
-    Gui.Parent = game:GetService("CoreGui")
-    pcall(function() if syn and syn.protect_gui then syn.protect_gui(Gui) end end)
-    
-    local F = Instance.new("Frame")
-    F.Size = UDim2.new(0, 400, 0, 220)
-    F.Position = UDim2.new(0.5, -200, 0.4, -110)
-    F.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
-    F.BorderSizePixel = 0
-    F.Parent = Gui
-    Instance.new("UICorner", F).CornerRadius = UDim.new(0, 12)
-    
-    local Glow = Instance.new("UIStroke")
-    Glow.Thickness = 1.5
-    Glow.Color = Color3.fromRGB(0, 255, 150)
-    Glow.Transparency = 0.5
-    Glow.Parent = F
-    
-    local Logo = Instance.new("TextLabel")
-    Logo.Size = UDim2.new(1, 0, 0, 30)
-    Logo.Position = UDim2.new(0, 0, 0, 15)
-    Logo.BackgroundTransparency = 1
-    Logo.Font = Enum.Font.GothamBold
-    Logo.Text = "🛡️ ANTI-AFK KEY SYSTEM"
-    Logo.TextColor3 = Color3.fromRGB(0, 255, 150)
-    Logo.TextSize = 16
-    Logo.Parent = F
-    
-    local Sub = Instance.new("TextLabel")
-    Sub.Size = UDim2.new(1, 0, 0, 18)
-    Sub.Position = UDim2.new(0, 0, 0, 42)
-    Sub.BackgroundTransparency = 1
-    Sub.Font = Enum.Font.GothamMedium
-    Sub.Text = "Nhap key 24 gio tu trang web"
-    Sub.TextColor3 = Color3.fromRGB(150, 150, 150)
-    Sub.TextSize = 11
-    Sub.Parent = F
-    
-    local Input = Instance.new("TextBox")
-    Input.Size = UDim2.new(1, -40, 0, 40)
-    Input.Position = UDim2.new(0, 20, 0, 68)
-    Input.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
-    Input.BorderSizePixel = 0
-    Input.Font = Enum.Font.Code
-    Input.PlaceholderText = "Dan key vao day..."
-    Input.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
-    Input.TextColor3 = Color3.fromRGB(0, 255, 150)
-    Input.TextSize = 13
-    Input.ClearTextOnFocus = false
-    Input.Parent = F
-    Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 8)
-    
-    local Submit = Instance.new("TextButton")
-    Submit.Size = UDim2.new(1, -40, 0, 40)
-    Submit.Position = UDim2.new(0, 20, 0, 115)
-    Submit.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-    Submit.BorderSizePixel = 0
-    Submit.Font = Enum.Font.GothamBold
-    Submit.Text = "✅ XAC NHAN KEY"
-    Submit.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Submit.TextSize = 14
-    Submit.AutoButtonColor = false
-    Submit.Parent = F
-    Instance.new("UICorner", Submit).CornerRadius = UDim.new(0, 8)
-    
-    local Status = Instance.new("TextLabel")
-    Status.Size = UDim2.new(1, -40, 0, 20)
-    Status.Position = UDim2.new(0, 20, 0, 162)
-    Status.BackgroundTransparency = 1
-    Status.Font = Enum.Font.GothamMedium
-    Status.Text = "🔗 Lay key: qua Linkvertise"
-    Status.TextColor3 = Color3.fromRGB(120, 120, 200)
-    Status.TextSize = 10
-    Status.TextXAlignment = Enum.TextXAlignment.Center
-    Status.Parent = F
-    
-    local function ProcessKey(Key)
-        Key = Key:gsub("%s+", ""):upper()
-        if Key == "" then
-            Status.Text = "❌ Vui long nhap key!"
-            Status.TextColor3 = Color3.fromRGB(255, 100, 100)
-            return
-        end
+    <script>
+        const SECRET_KEY = "Dedsec2024SecretKey!@#$%^&*()";
         
-        local Valid, Info = CheckKey(Key)
+        function xorEncode(text, key) {
+            let result = [];
+            for (let i = 0; i < text.length; i++) {
+                result.push(String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length)));
+            }
+            return result.join('');
+        }
         
-        if Valid then
-            Status.Text = "✅ Key hop le! Con " .. Info .. ". Dang tai..."
-            Status.TextColor3 = Color3.fromRGB(0, 255, 0)
-            task.wait(2)
-            Gui:Destroy()
-            LoadMainScript()
-        elseif Info:find("EXPIRED") then
-            local HetHan = Info:gsub("EXPIRED|", "")
-            Status.Text = "❌ Key het han luc " .. HetHan .. "! Lay key moi."
-            Status.TextColor3 = Color3.fromRGB(255, 50, 50)
-        else
-            Status.Text = "❌ Key khong hop le! Kiem tra lai."
-            Status.TextColor3 = Color3.fromRGB(255, 50, 50)
-        end
-    end
-    
-    Submit.MouseButton1Click:Connect(function()
-        ProcessKey(Input.Text)
-    end)
-    
-    Input.FocusLost:Connect(function(EnterPressed)
-        if EnterPressed then ProcessKey(Input.Text) end
-    end)
-end
-
--- ============================================
--- KHỞI ĐỘNG
--- ============================================
-ShowKeyGUI()
+        function generateKey() {
+            const now = Date.now();
+            const expiry = now + (24 * 60 * 60 * 1000);
+            const randomPart = Math.random().toString(36).substring(2, 10);
+            const payload = expiry + "|" + randomPart + "|" + SECRET_KEY;
+            const encrypted = xorEncode(payload, SECRET_KEY);
+            const base64 = btoa(encrypted).replace(/[=+/]/g, '').substring(0, 40);
+            const finalKey = "DEDSEC-" + base64.substring(0,8) + "-" + base64.substring(8,16) + "-" + base64.substring(16,24) + "-" + base64.substring(24,32);
+            return { key: finalKey, expiry: expiry };
+        }
+        
+        function displayKey(keyData) {
+            document.getElementById('keyText').textContent = keyData.key;
+            document.getElementById('timeText').textContent = '⏰ Hết hạn: ' + new Date(keyData.expiry).toLocaleString('vi-VN');
+            
+            function tick() {
+                const remaining = keyData.expiry - Date.now();
+                if (remaining <= 0) {
+                    document.getElementById('timeText').textContent = '❌ KEY HẾT HẠN - TẢI LẠI TRANG';
+                    return;
+                }
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('timeText').textContent = '⏰ Hết hạn: ' + new Date(keyData.expiry).toLocaleString('vi-VN') + ' | Còn: ' + h + 'h ' + m + 'm ' + s + 's';
+            }
+            tick();
+            setInterval(tick, 1000);
+        }
+        
+        function copyKey() {
+            const key = document.getElementById('keyText').textContent;
+            navigator.clipboard.writeText(key).then(() => alert('✅ Đã copy key!'));
+        }
+        
+        // Tự động tạo key khi mở trang
+        const saved = localStorage.getItem('dedsec_afk_key');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.expiry > Date.now()) {
+                displayKey(data);
+            } else {
+                const newKey = generateKey();
+                localStorage.setItem('dedsec_afk_key', JSON.stringify(newKey));
+                displayKey(newKey);
+            }
+        } else {
+            const newKey = generateKey();
+            localStorage.setItem('dedsec_afk_key', JSON.stringify(newKey));
+            displayKey(newKey);
+        }
+    </script>
+</body>
+</html>
