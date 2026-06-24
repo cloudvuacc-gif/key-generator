@@ -20,47 +20,74 @@
 <body>
     <div class="container" id="main"></div>
     <script>
-        var API = "https://script.google.com/macros/s/AKfycbwvl-V-iBNGwqSVFv7zXkBCk7J2gVSVSp8JP24pa4SfRdFeIScA3oaFUG3b2wXSkZCT/exec";
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
         
-        function showKey(k, expires){
-            var d = new Date(expires);
+        // ============================================
+        // HÀM TẠO KEY (GIỐNG ROBLOX)
+        // ============================================
+        function generateKey() {
+            var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
+            var now = new Date();
+            var dateStr = now.getFullYear() + 
+                         ('0' + (now.getMonth()+1)).slice(-2) + 
+                         ('0' + now.getDate()).slice(-2) + 
+                         ('0' + now.getHours()).slice(-2); // Đổi mỗi giờ
+            
+            var hash = 0;
+            var input = dateStr + SECRET;
+            for (var i = 0; i < input.length; i++) {
+                hash = ((hash << 5) - hash) + input.charCodeAt(i);
+                hash = hash & hash;
+            }
+            
+            var keyPart1 = Math.abs(hash).toString(36).toUpperCase().substring(0, 6);
+            var keyPart2 = Math.abs(hash * 7 + 13).toString(36).toUpperCase().substring(0, 6);
+            
+            return 'DEDSEC-' + keyPart1 + '-' + keyPart2;
+        }
+        
+        function showKey(k){
+            var nextHour = new Date();
+            nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+            
             document.getElementById('main').innerHTML = 
-                '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Each verification = New unique key</p>' +
+                '<h2>🛡️ YOUR KEY</h2>' +
+                '<p style="color:#888;font-size:12px">Key changes every hour - Unique each time</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p class="expires">⏰ Expires: ' + d.toLocaleString() + '</p>' +
+                '<p class="expires">⏰ Next key in: <span id="countdown"></span></p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
+            
+            function updateCountdown() {
+                var now = new Date();
+                var next = new Date();
+                next.setHours(next.getHours() + 1, 0, 0, 0);
+                var diff = Math.floor((next - now) / 1000);
+                var m = Math.floor(diff / 60);
+                var s = diff % 60;
+                document.getElementById('countdown').textContent = m + 'm ' + s + 's';
+            }
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
         }
+        
         function showLock(){
             document.getElementById('main').innerHTML = 
                 '<span style="font-size:60px;display:block;margin:20px 0">🔒</span>' +
                 '<h2>VERIFICATION REQUIRED</h2>' +
-                '<p style="color:#888;font-size:13px">Complete verification to get your unique key</p>' +
+                '<p style="color:#888;font-size:13px">Complete verification to get your key</p>' +
                 '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
                 '<p class="info">Click above → Complete → Get key automatically</p>';
         }
-        function showError(){
-            document.getElementById('main').innerHTML = 
-                '<span style="font-size:60px;display:block;margin:20px 0">⚠️</span>' +
-                '<h2>ERROR</h2>' +
-                '<p style="color:#ff5555;font-size:13px">Failed to generate key</p>' +
-                '<a href="' + LV + '" class="lock-btn">🔄 TRY AGAIN</a>';
-        }
+        
         function copyKey(){
             var k = document.getElementById('keyText').textContent;
             if(k) navigator.clipboard.writeText(k).then(function(){alert('✅ Key copied!')});
         }
         
-        if(hash && hash.length > 10){
-            fetch('https://api.ipify.org?format=json')
-                .then(r => r.json())
-                .then(d => fetch(API + '?action=generate&ip=' + encodeURIComponent(d.ip)))
-                .then(r => r.json())
-                .then(d => d.success ? showKey(d.key, d.expires) : showError())
-                .catch(() => showError());
+        if(hash && hash.length > 5){
+            showKey(generateKey());
         } else {
             showLock();
         }
