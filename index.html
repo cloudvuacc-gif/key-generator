@@ -17,7 +17,8 @@
         .lock-btn{display:inline-block;background:#00ff96;color:#000;padding:16px 40px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
         .warning{color:#ff5555;font-size:13px;margin:10px 0}
-        .expired-box{background:#1a0000;border:1px solid #ff3333;padding:25px;border-radius:10px;margin:15px 0}
+        .uid-badge{background:#1a1a3a;color:#88aaff;padding:8px 15px;border-radius:20px;display:inline-block;margin:5px;font-size:12px}
+        .editable-note{color:#ffaa00;font-size:10px;margin:5px 0}
     </style>
 </head>
 <body>
@@ -25,6 +26,7 @@
     <script>
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
+        var uidFromUrl = new URLSearchParams(window.location.search).get('uid');
 
         function generateKey(userId) {
             var now = new Date();
@@ -34,21 +36,33 @@
             var h = ('0' + now.getHours()).slice(-2);
             var dateStr = y + m + d + h;
             var random = Math.random().toString(36).substring(2, 6).toUpperCase();
-            
-            // Key = DEDSEC-USERID-GIỜ-RANDOM
-            // Mã hóa UserID đơn giản (đảo ngược + hash nhẹ)
             var uidHash = parseInt(userId).toString(36).toUpperCase();
             return "DEDSEC-" + uidHash + "-" + dateStr + "-" + random;
         }
 
-        function showInputUserId() {
+        function showKey(userId, newKey) {
+            document.getElementById('main').innerHTML = 
+                '<h2>🛡️ YOUR KEY</h2>' +
+                '<span class="uid-badge">👤 User ID: ' + userId + '</span>' +
+                '<p style="color:#888;font-size:12px;margin-top:10px">Key locked to this account</p>' +
+                '<div class="key" id="keyText">' + newKey + '</div>' +
+                '<button id="copyBtn" onclick="copyAndClose()">📋 COPY KEY</button>' +
+                '<p class="warning">⚠️ This key ONLY works for User ID ' + userId + '!</p>' +
+                '<p class="info">Paste this key into your Roblox script</p>';
+        }
+
+        function showInputUserId(prefilledUid) {
+            var uidValue = prefilledUid || '';
+            var noteText = prefilledUid ? '✅ Auto-filled from link - You can change it!' : 'Enter your Roblox User ID';
+            
             document.getElementById('main').innerHTML = 
                 '<h2>🛡️ ENTER YOUR ROBLOX USER ID</h2>' +
                 '<p style="color:#888;font-size:12px">Key will be locked to your account</p>' +
-                '<input type="text" id="userIdInput" placeholder="Example: 123456789" maxlength="15">' +
+                '<input type="text" id="userIdInput" placeholder="Example: 123456789" value="' + uidValue + '" maxlength="15">' +
+                '<p class="editable-note">' + noteText + '</p>' +
                 '<button onclick="generateAndShow()">🔑 GET MY KEY</button>' +
-                '<p class="warning">⚠️ This key ONLY works for YOUR account!</p>' +
-                '<p class="info">Find your User ID in Roblox profile URL</p>';
+                '<p class="warning">⚠️ Find your User ID in the script (COPY ID button)</p>' +
+                '<p class="info">Make sure the ID is correct - Key only works for that ID!</p>';
         }
 
         function generateAndShow() {
@@ -71,25 +85,18 @@
             localStorage.setItem('used_hashes', JSON.stringify(usedHashes));
             
             var newKey = generateKey(userId);
-            
-            document.getElementById('main').innerHTML = 
-                '<h2>🛡️ YOUR KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Locked to User ID: <b style="color:#00ff96">' + userId + '</b></p>' +
-                '<div class="key" id="keyText">' + newKey + '</div>' +
-                '<button id="copyBtn" onclick="copyAndClose()">📋 COPY KEY</button>' +
-                '<p class="warning">⚠️ This key ONLY works for User ID ' + userId + '!</p>' +
-                '<p class="warning">⚠️ Page will close after copy!</p>' +
-                '<p class="info">Paste this key into your Roblox script</p>';
+            showKey(userId, newKey);
         }
 
         function showHashExpired() {
             document.getElementById('main').innerHTML = 
                 '<span style="font-size:60px;display:block;margin:20px 0">⏰</span>' +
                 '<h2>HASH EXPIRED</h2>' +
-                '<div class="expired-box">' +
+                '<div style="background:#1a0000;border:1px solid #ff3333;padding:25px;border-radius:10px;margin:15px 0">' +
                 '<p style="color:#ff5555;font-size:14px">This link has already been used!</p>' +
                 '</div>' +
-                '<a href="' + LV + '" class="lock-btn">🔗 GET NEW KEY</a>';
+                '<a href="' + LV + '" class="lock-btn">🔗 GET NEW KEY</a>' +
+                '<p class="info">Click above → Complete verification → Get new key</p>';
         }
 
         function showLock() {
@@ -113,12 +120,17 @@
             }
         }
 
+        // ============================================
+        // LOGIC CHÍNH
+        // ============================================
         if (hash && hash.length > 5) {
             var usedHashes = JSON.parse(localStorage.getItem('used_hashes') || '{}');
             if (usedHashes[hash]) {
                 showHashExpired();
             } else {
-                showInputUserId();
+                // Có UID từ URL → Tự động điền sẵn (nhưng vẫn cho sửa)
+                // Không có UID → Để trống
+                showInputUserId(uidFromUrl || '');
             }
         } else {
             showLock();
