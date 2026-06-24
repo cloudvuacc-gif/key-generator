@@ -15,7 +15,7 @@
         .lock-btn{display:inline-block;background:#00ff96;color:#000;padding:16px 40px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
         .warning{color:#ff5555;font-size:13px;margin:10px 0}
-        .locked{color:#ffaa00;font-size:14px;margin:15px 0}
+        .expired-box{background:#1a0000;border:1px solid #ff3333;padding:25px;border-radius:10px;margin:15px 0}
     </style>
 </head>
 <body>
@@ -23,7 +23,6 @@
     <script>
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
-        var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
 
         function generateKey() {
             var now = new Date();
@@ -39,21 +38,23 @@
         function showKey(k) {
             document.getElementById('main').innerHTML = 
                 '<h2>🛡️ YOUR KEY</h2>' +
-                '<p style="color:#888;font-size:12px">One key per hour - Cannot reset!</p>' +
+                '<p style="color:#888;font-size:12px">One-time use - Copy now!</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyAndClose()">📋 COPY KEY</button>' +
-                '<p class="warning">⚠️ This is your ONLY key for this hour!</p>' +
+                '<p class="warning">⚠️ Refreshing will NOT give a new key!</p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
         }
 
-        function showAlreadyClaimed(existingKey, timeLeft) {
+        function showHashExpired() {
             document.getElementById('main').innerHTML = 
-                '<h2>⏰ KEY ALREADY CLAIMED</h2>' +
-                '<p class="locked">You already got a key this hour!</p>' +
-                '<div class="key" style="border-color:#ffaa00;color:#ffaa00">' + existingKey + '</div>' +
-                '<button onclick="copyKey(\'' + existingKey + '\')">📋 COPY YOUR KEY</button>' +
-                '<p class="warning">Next key available in: ' + timeLeft + '</p>' +
-                '<p class="info">Use the key above - Reset won\'t give you a new one!</p>';
+                '<span style="font-size:60px;display:block;margin:20px 0">⏰</span>' +
+                '<h2>HASH EXPIRED</h2>' +
+                '<div class="expired-box">' +
+                '<p style="color:#ff5555;font-size:14px">This link has already been used!</p>' +
+                '<p style="color:#ffaa00;font-size:12px;margin-top:10px">Each verification gives ONE key only.</p>' +
+                '</div>' +
+                '<a href="' + LV + '" class="lock-btn">🔗 GET NEW KEY</a>' +
+                '<p class="info">Click above → Complete verification → Get new key</p>';
         }
 
         function showLock() {
@@ -63,11 +64,6 @@
                 '<p style="color:#888;font-size:13px">Complete verification to get your key</p>' +
                 '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
                 '<p class="info">Click above → Complete verification → Get key automatically</p>';
-        }
-
-        function copyKey(k) {
-            var key = k || document.getElementById('keyText').textContent;
-            if (key) navigator.clipboard.writeText(key).then(function() { alert('✅ Key copied!'); });
         }
 
         function copyAndClose() {
@@ -81,44 +77,35 @@
         }
 
         // ============================================
-        // LOGIC CHÍNH: KIỂM TRA KEY CŨ TRONG GIỜ NÀY
+        // LOGIC: HASH DÙNG 1 LẦN - KIỂM TRA HASH ĐÃ DÙNG CHƯA
         // ============================================
         if (hash && hash.length > 5) {
             var now = new Date();
             var currentHour = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + ('0'+now.getHours()).slice(-2);
             
-            // Lấy key đã lưu
-            var saved = localStorage.getItem('dedsec_key_data');
+            // Kiểm tra hash đã được dùng chưa
+            var usedHashes = JSON.parse(localStorage.getItem('used_hashes') || '{}');
             
-            if (saved) {
-                var data = JSON.parse(saved);
-                
-                // Nếu key cùng giờ → Hiện key cũ, không cho lấy mới
-                if (data.hour === currentHour) {
-                    var nextHour = new Date();
-                    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-                    var diff = Math.floor((nextHour - now) / 1000);
-                    var m = Math.floor(diff / 60);
-                    var s = diff % 60;
-                    showAlreadyClaimed(data.key, m + 'm ' + s + 's');
-                } else {
-                    // Sang giờ mới → Tạo key mới
-                    var newKey = generateKey();
-                    localStorage.setItem('dedsec_key_data', JSON.stringify({
-                        key: newKey,
-                        hour: currentHour,
-                        time: now.getTime()
-                    }));
-                    showKey(newKey);
-                }
+            if (usedHashes[hash]) {
+                // Hash đã dùng rồi → Từ chối
+                showHashExpired();
             } else {
-                // Chưa có key → Tạo key mới
-                var newKey = generateKey();
-                localStorage.setItem('dedsec_key_data', JSON.stringify({
-                    key: newKey,
+                // Hash chưa dùng → Đánh dấu đã dùng
+                usedHashes[hash] = {
                     hour: currentHour,
                     time: now.getTime()
+                };
+                localStorage.setItem('used_hashes', JSON.stringify(usedHashes));
+                
+                // Tạo key mới và hiển thị
+                var newKey = generateKey();
+                
+                // Lưu key vào localStorage (chỉ để hiện lại nếu F5)
+                localStorage.setItem('current_key', JSON.stringify({
+                    key: newKey,
+                    hour: currentHour
                 }));
+                
                 showKey(newKey);
             }
         } else {
