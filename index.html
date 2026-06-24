@@ -14,7 +14,7 @@
         button:hover{background:#00cc78}
         .lock-btn{display:inline-block;background:#00ff96;color:#000;padding:16px 40px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .expires{color:#ffaa00;font-size:12px;margin:10px 0}
+        .copied{color:#00ff96;font-size:14px;margin:10px 0;display:none}
     </style>
 </head>
 <body>
@@ -30,36 +30,18 @@
             var d = ('0' + now.getDate()).slice(-2);
             var h = ('0' + now.getHours()).slice(-2);
             var dateStr = y + m + d + h;
-            
-            // Tạo 4 ký tự random (36^4 = 1,679,616 tổ hợp mỗi giờ)
             var random = Math.random().toString(36).substring(2, 6).toUpperCase();
-            
             return "DEDSEC-" + dateStr + "-" + random;
         }
 
         function showKey(k) {
-            var nextHour = new Date();
-            nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-            
             document.getElementById('main').innerHTML = 
                 '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Random key - Changes every hour</p>' +
+                '<p style="color:#888;font-size:12px">One-time key - Copy now!</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
-                '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p class="expires">⏰ Next key in: <span id="countdown"></span></p>' +
-                '<p class="info">1. Copy key<br>2. Paste into Roblox script<br>3. Submit to activate 24h</p>';
-            
-            function tick() {
-                var now = new Date();
-                var next = new Date();
-                next.setHours(next.getHours() + 1, 0, 0, 0);
-                var diff = Math.floor((next - now) / 1000);
-                var m = Math.floor(diff / 60);
-                var s = diff % 60;
-                document.getElementById('countdown').textContent = m + 'm ' + s + 's';
-            }
-            tick();
-            setInterval(tick, 1000);
+                '<button onclick="copyAndClose()">📋 COPY KEY</button>' +
+                '<p class="copied" id="copiedMsg">✅ Copied! Page will close...</p>' +
+                '<p class="info">Paste this key into your Roblox script</p>';
         }
 
         function showLock() {
@@ -71,9 +53,20 @@
                 '<p class="info">Click above → Complete verification → Get key automatically</p>';
         }
 
-        function copyKey() {
+        function copyAndClose() {
             var k = document.getElementById('keyText').textContent;
-            if (k) navigator.clipboard.writeText(k).then(function() { alert('✅ Key copied!'); });
+            if (k) {
+                navigator.clipboard.writeText(k).then(function() {
+                    document.getElementById('copiedMsg').style.display = 'block';
+                    document.querySelector('button').style.display = 'none';
+                    // Tự đóng trang sau 2 giây
+                    setTimeout(function() {
+                        window.close();
+                        // Nếu không đóng được, hiện thông báo
+                        document.body.innerHTML = '<div class="box"><h2>✅ KEY COPIED!</h2><p style="color:#00ff96;font-size:18px;margin:20px">You can close this page now</p><p class="info">Paste the key into your Roblox script</p></div>';
+                    }, 2000);
+                });
+            }
         }
 
         if (hash && hash.length > 5) {
