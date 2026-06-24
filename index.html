@@ -21,18 +21,20 @@
     <div class="box" id="main"></div>
     <script>
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
-        var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
         var hash = new URLSearchParams(window.location.search).get('hash');
 
-        // Tạo key: DEDSEC-YYYYMMDDHH-SECRET(8) - GIỐNG HỆT ROBLOX
         function generateKey() {
             var now = new Date();
-            var year = now.getFullYear();
-            var month = ('0' + (now.getMonth() + 1)).slice(-2);
-            var day = ('0' + now.getDate()).slice(-2);
-            var hour = ('0' + now.getHours()).slice(-2);
-            var dateStr = year + month + day + hour;
-            return "DEDSEC-" + dateStr + "-" + SECRET.substring(0, 8).toUpperCase();
+            var y = now.getFullYear();
+            var m = ('0' + (now.getMonth() + 1)).slice(-2);
+            var d = ('0' + now.getDate()).slice(-2);
+            var h = ('0' + now.getHours()).slice(-2);
+            var dateStr = y + m + d + h;
+            
+            // Tạo 4 ký tự random (36^4 = 1,679,616 tổ hợp mỗi giờ)
+            var random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            return "DEDSEC-" + dateStr + "-" + random;
         }
 
         function showKey(k) {
@@ -40,8 +42,8 @@
             nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
             
             document.getElementById('main').innerHTML = 
-                '<h2>🛡️ YOUR KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Key changes every hour - Valid 24h after activation</p>' +
+                '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
+                '<p style="color:#888;font-size:12px">Random key - Changes every hour</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
                 '<p class="expires">⏰ Next key in: <span id="countdown"></span></p>' +
@@ -74,7 +76,6 @@
             if (k) navigator.clipboard.writeText(k).then(function() { alert('✅ Key copied!'); });
         }
 
-        // Có hash từ Linkvertise → Hiện key | Không có → Hiện khóa
         if (hash && hash.length > 5) {
             showKey(generateKey());
         } else {
