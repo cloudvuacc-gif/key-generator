@@ -14,13 +14,12 @@
         button:hover{background:#00cc78}
         .lock-btn{display:block;width:100%;background:linear-gradient(90deg,#00ff96,#00d4ff);color:#000;padding:16px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .status{color:#ffaa00;font-size:12px;margin:10px 0}
     </style>
 </head>
 <body>
     <div class="container" id="main"></div>
     <script>
-        var API = "https://script.google.com/macros/s/AKfycbzgs-q5z8hx10YmLGSPuiyGnA1pTyHnfDiKtT9ccVMGM04pti0e0itmmMq2B6FRd6Y_/exec";
+        var API = "https://script.google.com/macros/s/AKfycbwvl-V-iBNGwqSVFv7zXkBCk7J2gVSVSp8JP24pa4SfRdFeIScA3oaFUG3b2wXSkZCT/exec";
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
         
@@ -30,10 +29,9 @@
                 '<p style="color:#888;font-size:12px">Key tied to your IP - 24 hours</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p class="status">Key expires at midnight</p>' +
+                '<p style="color:#ffaa00;font-size:12px;margin-top:10px">Key expires at midnight</p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
         }
-        
         function showLock(){
             document.getElementById('main').innerHTML = 
                 '<span style="font-size:60px;display:block;margin:20px 0">🔒</span>' +
@@ -42,7 +40,6 @@
                 '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
                 '<p class="info">Click above → Complete → Get key automatically</p>';
         }
-        
         function showError(){
             document.getElementById('main').innerHTML = 
                 '<span style="font-size:60px;display:block;margin:20px 0">⚠️</span>' +
@@ -50,7 +47,6 @@
                 '<p style="color:#ff5555;font-size:13px">Failed to generate key</p>' +
                 '<a href="' + LV + '" class="lock-btn">🔄 TRY AGAIN</a>';
         }
-        
         function copyKey(){
             var k = document.getElementById('keyText').textContent;
             if(k) navigator.clipboard.writeText(k).then(function(){alert('✅ Key copied!')});
@@ -59,7 +55,7 @@
         if(hash && hash.length > 10){
             fetch('https://api.ipify.org?format=json')
                 .then(r => r.json())
-                .then(d => fetch(API + '?action=generate&ip=' + encodeURIComponent(d.ip) + '&hash=' + encodeURIComponent(hash)))
+                .then(d => fetch(API + '?action=generate&ip=' + encodeURIComponent(d.ip)))
                 .then(r => r.json())
                 .then(d => d.success ? showKey(d.key) : showError())
                 .catch(() => showError());
