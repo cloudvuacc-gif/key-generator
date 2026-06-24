@@ -2,39 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Get Key</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Key - Anti-AFK</title>
     <style>
-        body{background:#0a0a0a;color:#fff;font-family:Arial;display:flex;justify-content:center;align-items:center;height:100vh}
-        .box{background:#111;padding:30px;border-radius:15px;text-align:center;border:1px solid #0f0}
-        h2{color:#0f0}.key{background:#000;color:#0f0;padding:15px;margin:15px 0;font-size:18px;word-break:break-all}
-        button{background:#0f0;color:#000;padding:12px 30px;border:none;font-weight:bold;cursor:pointer;border-radius:5px}
-        .lock{background:#0f0;color:#000;padding:15px;display:inline-block;text-decoration:none;font-weight:bold;border-radius:8px;margin:10px}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0a0a0a;color:#fff;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
+        .box{background:#111;padding:30px;border-radius:15px;text-align:center;border:1px solid #00ff96;box-shadow:0 0 30px rgba(0,255,150,0.2);max-width:500px;width:95%}
+        h2{color:#00ff96;margin-bottom:5px}
+        .key{background:#000;color:#00ff96;font-family:monospace;font-size:20px;padding:20px;margin:20px 0;border-radius:10px;border:2px dashed #00ff96;word-break:break-all}
+        button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer;margin:5px}
+        button:hover{background:#00cc78}
+        .lock-btn{display:inline-block;background:#00ff96;color:#000;padding:16px 40px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
+        .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
+        .expires{color:#ffaa00;font-size:12px;margin:10px 0}
     </style>
 </head>
 <body>
-<div class="box" id="m"></div>
-<script>
-var LV="https://link-center.net/6819549/eLZPTLtWBC8k";
-var h=new URLSearchParams(location.search).get('hash');
-var S="Dedsec2024SecretKey!@#$%^&*()";
+    <div class="box" id="main"></div>
+    <script>
+        var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
+        var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
+        var hash = new URLSearchParams(window.location.search).get('hash');
 
-function gk(){
-    var n=new Date();
-    var d=n.getFullYear()+("0"+(n.getMonth()+1)).slice(-2)+("0"+n.getDate()).slice(-2)+("0"+n.getHours()).slice(-2);
-    return "DEDSEC-"+d+"-"+S.substring(0,8).toUpperCase();
-}
+        // Tạo key: DEDSEC-YYYYMMDDHH-SECRET(8) - GIỐNG HỆT ROBLOX
+        function generateKey() {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = ('0' + (now.getMonth() + 1)).slice(-2);
+            var day = ('0' + now.getDate()).slice(-2);
+            var hour = ('0' + now.getHours()).slice(-2);
+            var dateStr = year + month + day + hour;
+            return "DEDSEC-" + dateStr + "-" + SECRET.substring(0, 8).toUpperCase();
+        }
 
-function sk(k){
-    document.getElementById('m').innerHTML='<h2>YOUR KEY</h2><div class="key">'+k+'</div><button onclick="copyKey()">COPY KEY</button>';
-}
-function sl(){
-    document.getElementById('m').innerHTML='<h2>VERIFY</h2><a href="'+LV+'" class="lock">UNLOCK KEY</a>';
-}
-function copyKey(){
-    var k=document.querySelector('.key').textContent;
-    navigator.clipboard.writeText(k).then(function(){alert('Copied!')});
-}
-if(h&&h.length>5){sk(gk());}else{sl();}
-</script>
+        function showKey(k) {
+            var nextHour = new Date();
+            nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+            
+            document.getElementById('main').innerHTML = 
+                '<h2>🛡️ YOUR KEY</h2>' +
+                '<p style="color:#888;font-size:12px">Key changes every hour - Valid 24h after activation</p>' +
+                '<div class="key" id="keyText">' + k + '</div>' +
+                '<button onclick="copyKey()">📋 COPY KEY</button>' +
+                '<p class="expires">⏰ Next key in: <span id="countdown"></span></p>' +
+                '<p class="info">1. Copy key<br>2. Paste into Roblox script<br>3. Submit to activate 24h</p>';
+            
+            function tick() {
+                var now = new Date();
+                var next = new Date();
+                next.setHours(next.getHours() + 1, 0, 0, 0);
+                var diff = Math.floor((next - now) / 1000);
+                var m = Math.floor(diff / 60);
+                var s = diff % 60;
+                document.getElementById('countdown').textContent = m + 'm ' + s + 's';
+            }
+            tick();
+            setInterval(tick, 1000);
+        }
+
+        function showLock() {
+            document.getElementById('main').innerHTML = 
+                '<span style="font-size:60px;display:block;margin:20px 0">🔒</span>' +
+                '<h2>VERIFICATION REQUIRED</h2>' +
+                '<p style="color:#888;font-size:13px">Complete verification to get your key</p>' +
+                '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
+                '<p class="info">Click above → Complete verification → Get key automatically</p>';
+        }
+
+        function copyKey() {
+            var k = document.getElementById('keyText').textContent;
+            if (k) navigator.clipboard.writeText(k).then(function() { alert('✅ Key copied!'); });
+        }
+
+        // Có hash từ Linkvertise → Hiện key | Không có → Hiện khóa
+        if (hash && hash.length > 5) {
+            showKey(generateKey());
+        } else {
+            showLock();
+        }
+    </script>
 </body>
 </html>
