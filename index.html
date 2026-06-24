@@ -10,76 +10,61 @@
         .container{background:#111;padding:30px;border-radius:15px;text-align:center;border:1px solid #00ff96;box-shadow:0 0 30px rgba(0,255,150,0.2);max-width:500px;width:95%}
         h2{color:#00ff96;margin-bottom:10px}
         .key{background:#000;color:#00ff96;font-family:monospace;font-size:20px;padding:20px;margin:20px 0;border-radius:10px;border:2px dashed #00ff96;word-break:break-all}
-        button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer}
+        button{background:#00ff96;color:#000;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer;margin:5px}
         button:hover{background:#00cc78}
         .lock-btn{display:block;width:100%;background:linear-gradient(90deg,#00ff96,#00d4ff);color:#000;padding:16px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
-        .lock-btn:hover{transform:scale(1.02)}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .lock-icon{font-size:60px;display:block;margin:20px 0}
+        .status{color:#ffaa00;font-size:12px;margin:10px 0}
     </style>
 </head>
 <body>
     <div class="container" id="main"></div>
-
     <script>
-        var API_URL = "https://script.google.com/macros/s/AKfycbzgs-q5z8hx10YmLGSPuiyGnA1pTyHnfDiKtT9ccVMGM04pti0e0itmmMq2B6FRd6Y_/exec";
-        var LINKVERTISE_URL = "https://link-center.net/6819549/eLZPTLtWBC8k";
+        var API = "https://script.google.com/macros/s/AKfycbzgs-q5z8hx10YmLGSPuiyGnA1pTyHnfDiKtT9ccVMGM04pti0e0itmmMq2B6FRd6Y_/exec";
+        var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
         
-        // ============================================
-        // HIỂN THỊ KEY (CHỈ KHI CÓ HASH HỢP LỆ)
-        // ============================================
-        function showKeyPage(key) {
+        function showKey(k){
             document.getElementById('main').innerHTML = 
                 '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
                 '<p style="color:#888;font-size:12px">Key tied to your IP - 24 hours</p>' +
-                '<div class="key" id="keyText">' + key + '</div>' +
+                '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p style="color:#ffaa00;font-size:12px;margin-top:10px">Key expires at midnight</p>' +
+                '<p class="status">Key expires at midnight</p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
         }
         
-        // ============================================
-        // HIỂN THỊ TRANG KHÓA (KHÔNG CÓ HASH)
-        // ============================================
-        function showLockPage() {
+        function showLock(){
             document.getElementById('main').innerHTML = 
-                '<span class="lock-icon">🔒</span>' +
+                '<span style="font-size:60px;display:block;margin:20px 0">🔒</span>' +
                 '<h2>VERIFICATION REQUIRED</h2>' +
-                '<p style="color:#888;font-size:13px">You must complete verification to get your key</p>' +
-                '<a href="' + LINKVERTISE_URL + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
-                '<p class="info">Click the button above → Complete verification → Get your unique key</p>';
+                '<p style="color:#888;font-size:13px">Complete verification to get your unique key</p>' +
+                '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
+                '<p class="info">Click above → Complete → Get key automatically</p>';
         }
         
-        function copyKey() {
+        function showError(){
+            document.getElementById('main').innerHTML = 
+                '<span style="font-size:60px;display:block;margin:20px 0">⚠️</span>' +
+                '<h2>ERROR</h2>' +
+                '<p style="color:#ff5555;font-size:13px">Failed to generate key</p>' +
+                '<a href="' + LV + '" class="lock-btn">🔄 TRY AGAIN</a>';
+        }
+        
+        function copyKey(){
             var k = document.getElementById('keyText').textContent;
-            if (k) navigator.clipboard.writeText(k).then(function(){ alert('✅ Key copied!'); });
+            if(k) navigator.clipboard.writeText(k).then(function(){alert('✅ Key copied!')});
         }
         
-        // ============================================
-        // LOGIC CHÍNH
-        // ============================================
-        if (hash && hash.length > 10) {
-            // Có hash - Lấy key
+        if(hash && hash.length > 10){
             fetch('https://api.ipify.org?format=json')
-                .then(function(r){ return r.json(); })
-                .then(function(ipData) {
-                    return fetch(API_URL + '?action=generate&ip=' + encodeURIComponent(ipData.ip));
-                })
-                .then(function(r){ return r.json(); })
-                .then(function(data) {
-                    if (data.success) {
-                        showKeyPage(data.key);
-                    } else {
-                        showLockPage();
-                    }
-                })
-                .catch(function() {
-                    showLockPage();
-                });
+                .then(r => r.json())
+                .then(d => fetch(API + '?action=generate&ip=' + encodeURIComponent(d.ip) + '&hash=' + encodeURIComponent(hash)))
+                .then(r => r.json())
+                .then(d => d.success ? showKey(d.key) : showError())
+                .catch(() => showError());
         } else {
-            // Không có hash - Khóa
-            showLockPage();
+            showLock();
         }
     </script>
 </body>
