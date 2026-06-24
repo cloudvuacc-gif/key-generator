@@ -16,6 +16,8 @@
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
         .warning{color:#ff5555;font-size:13px;margin:10px 0}
         .expired-box{background:#1a0000;border:1px solid #ff3333;padding:25px;border-radius:10px;margin:15px 0}
+        .closing-msg{color:#00ff96;font-size:18px;margin:15px 0;display:none;animation:fadeIn 0.5s}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     </style>
 </head>
 <body>
@@ -40,8 +42,9 @@
                 '<h2>🛡️ YOUR KEY</h2>' +
                 '<p style="color:#888;font-size:12px">One-time use - Copy now!</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
-                '<button onclick="copyAndClose()">📋 COPY KEY</button>' +
-                '<p class="warning">⚠️ Refreshing will NOT give a new key!</p>' +
+                '<button id="copyBtn" onclick="copyAndClose()">📋 COPY KEY</button>' +
+                '<p class="closing-msg" id="closingMsg">✅ Copied! Closing page in <span id="countdown">1.5</span>s...</p>' +
+                '<p class="warning">⚠️ Page will close automatically after copy!</p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
         }
 
@@ -70,41 +73,52 @@
             var k = document.getElementById('keyText').textContent;
             if (k) {
                 navigator.clipboard.writeText(k).then(function() {
-                    document.querySelector('button').textContent = '✅ COPIED!';
-                    document.querySelector('button').style.background = '#00cc78';
+                    // Ẩn nút copy
+                    document.getElementById('copyBtn').style.display = 'none';
+                    // Hiện thông báo đếm ngược
+                    var msg = document.getElementById('closingMsg');
+                    msg.style.display = 'block';
+                    
+                    // Đếm ngược 1.5 giây rồi đóng
+                    var timeLeft = 1.5;
+                    var countdownEl = document.getElementById('countdown');
+                    var interval = setInterval(function() {
+                        timeLeft -= 0.1;
+                        countdownEl.textContent = timeLeft.toFixed(1);
+                        if (timeLeft <= 0) {
+                            clearInterval(interval);
+                            // Đóng trang
+                            window.close();
+                            // Fallback nếu không đóng được
+                            setTimeout(function() {
+                                document.getElementById('main').innerHTML = 
+                                    '<h2>✅ KEY COPIED!</h2>' +
+                                    '<p style="color:#00ff96;font-size:18px;margin:20px">You can close this page now</p>' +
+                                    '<p class="info">Paste the key into your Roblox script</p>';
+                            }, 2000);
+                        }
+                    }, 100);
                 });
             }
         }
 
         // ============================================
-        // LOGIC: HASH DÙNG 1 LẦN - KIỂM TRA HASH ĐÃ DÙNG CHƯA
+        // LOGIC: HASH DÙNG 1 LẦN
         // ============================================
         if (hash && hash.length > 5) {
             var now = new Date();
             var currentHour = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + ('0'+now.getHours()).slice(-2);
             
-            // Kiểm tra hash đã được dùng chưa
             var usedHashes = JSON.parse(localStorage.getItem('used_hashes') || '{}');
             
             if (usedHashes[hash]) {
-                // Hash đã dùng rồi → Từ chối
                 showHashExpired();
             } else {
-                // Hash chưa dùng → Đánh dấu đã dùng
-                usedHashes[hash] = {
-                    hour: currentHour,
-                    time: now.getTime()
-                };
+                usedHashes[hash] = { hour: currentHour, time: now.getTime() };
                 localStorage.setItem('used_hashes', JSON.stringify(usedHashes));
                 
-                // Tạo key mới và hiển thị
                 var newKey = generateKey();
-                
-                // Lưu key vào localStorage (chỉ để hiện lại nếu F5)
-                localStorage.setItem('current_key', JSON.stringify({
-                    key: newKey,
-                    hour: currentHour
-                }));
+                localStorage.setItem('current_key', JSON.stringify({ key: newKey, hour: currentHour }));
                 
                 showKey(newKey);
             }
