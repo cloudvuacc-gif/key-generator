@@ -14,7 +14,6 @@
         button:hover{background:#00cc78}
         .lock-btn{display:block;width:100%;background:linear-gradient(90deg,#00ff96,#00d4ff);color:#000;padding:16px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .expires{color:#ffaa00;font-size:12px;margin:10px 0}
     </style>
 </head>
 <body>
@@ -22,75 +21,43 @@
     <script>
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
-        
-        // ============================================
-        // HÀM TẠO KEY (GIỐNG ROBLOX)
-        // ============================================
+        var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
+
         function generateKey() {
-            var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
             var now = new Date();
             var dateStr = now.getFullYear() + 
-                         ('0' + (now.getMonth()+1)).slice(-2) + 
-                         ('0' + now.getDate()).slice(-2) + 
-                         ('0' + now.getHours()).slice(-2); // Đổi mỗi giờ
+                         ('0'+(now.getMonth()+1)).slice(-2) + 
+                         ('0'+now.getDate()).slice(-2) + 
+                         ('0'+now.getHours()).slice(-2);
             
-            var hash = 0;
-            var input = dateStr + SECRET;
-            for (var i = 0; i < input.length; i++) {
-                hash = ((hash << 5) - hash) + input.charCodeAt(i);
-                hash = hash & hash;
-            }
-            
-            var keyPart1 = Math.abs(hash).toString(36).toUpperCase().substring(0, 6);
-            var keyPart2 = Math.abs(hash * 7 + 13).toString(36).toUpperCase().substring(0, 6);
-            
-            return 'DEDSEC-' + keyPart1 + '-' + keyPart2;
+            // Tạo key = Base64(NgayGio + Secret)
+            var raw = dateStr + SECRET;
+            var base64 = btoa(raw).replace(/[=+/]/g, '').substring(0, 16).toUpperCase();
+            return 'DEDSEC-' + base64.substring(0,8) + '-' + base64.substring(8,16);
         }
-        
+
         function showKey(k){
-            var nextHour = new Date();
-            nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-            
             document.getElementById('main').innerHTML = 
                 '<h2>🛡️ YOUR KEY</h2>' +
-                '<p style="color:#888;font-size:12px">Key changes every hour - Unique each time</p>' +
+                '<p style="color:#888;font-size:12px">Key changes every hour</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyKey()">📋 COPY KEY</button>' +
-                '<p class="expires">⏰ Next key in: <span id="countdown"></span></p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
-            
-            function updateCountdown() {
-                var now = new Date();
-                var next = new Date();
-                next.setHours(next.getHours() + 1, 0, 0, 0);
-                var diff = Math.floor((next - now) / 1000);
-                var m = Math.floor(diff / 60);
-                var s = diff % 60;
-                document.getElementById('countdown').textContent = m + 'm ' + s + 's';
-            }
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
         }
-        
+
         function showLock(){
             document.getElementById('main').innerHTML = 
                 '<span style="font-size:60px;display:block;margin:20px 0">🔒</span>' +
                 '<h2>VERIFICATION REQUIRED</h2>' +
-                '<p style="color:#888;font-size:13px">Complete verification to get your key</p>' +
-                '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>' +
-                '<p class="info">Click above → Complete → Get key automatically</p>';
+                '<a href="' + LV + '" class="lock-btn">🔗 UNLOCK KEY</a>';
         }
-        
+
         function copyKey(){
             var k = document.getElementById('keyText').textContent;
-            if(k) navigator.clipboard.writeText(k).then(function(){alert('✅ Key copied!')});
+            if(k) navigator.clipboard.writeText(k).then(function(){alert('Copied!')});
         }
-        
-        if(hash && hash.length > 5){
-            showKey(generateKey());
-        } else {
-            showLock();
-        }
+
+        if(hash && hash.length > 5){ showKey(generateKey()); } else { showLock(); }
     </script>
 </body>
 </html>
