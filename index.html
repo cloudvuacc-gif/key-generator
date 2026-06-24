@@ -14,7 +14,8 @@
         button:hover{background:#00cc78}
         .lock-btn{display:inline-block;background:#00ff96;color:#000;padding:16px 40px;font-size:16px;font-weight:bold;border-radius:10px;text-decoration:none;margin:15px 0}
         .info{color:#888;font-size:11px;margin-top:15px;line-height:1.6}
-        .copied{color:#00ff96;font-size:14px;margin:10px 0;display:none}
+        .warning{color:#ff5555;font-size:13px;margin:10px 0}
+        .locked{color:#ffaa00;font-size:14px;margin:15px 0}
     </style>
 </head>
 <body>
@@ -22,6 +23,7 @@
     <script>
         var LV = "https://link-center.net/6819549/eLZPTLtWBC8k";
         var hash = new URLSearchParams(window.location.search).get('hash');
+        var SECRET = "Dedsec2024SecretKey!@#$%^&*()";
 
         function generateKey() {
             var now = new Date();
@@ -36,12 +38,22 @@
 
         function showKey(k) {
             document.getElementById('main').innerHTML = 
-                '<h2>🛡️ YOUR UNIQUE KEY</h2>' +
-                '<p style="color:#888;font-size:12px">One-time key - Copy now!</p>' +
+                '<h2>🛡️ YOUR KEY</h2>' +
+                '<p style="color:#888;font-size:12px">One key per hour - Cannot reset!</p>' +
                 '<div class="key" id="keyText">' + k + '</div>' +
                 '<button onclick="copyAndClose()">📋 COPY KEY</button>' +
-                '<p class="copied" id="copiedMsg">✅ Copied! Page will close...</p>' +
+                '<p class="warning">⚠️ This is your ONLY key for this hour!</p>' +
                 '<p class="info">Paste this key into your Roblox script</p>';
+        }
+
+        function showAlreadyClaimed(existingKey, timeLeft) {
+            document.getElementById('main').innerHTML = 
+                '<h2>⏰ KEY ALREADY CLAIMED</h2>' +
+                '<p class="locked">You already got a key this hour!</p>' +
+                '<div class="key" style="border-color:#ffaa00;color:#ffaa00">' + existingKey + '</div>' +
+                '<button onclick="copyKey(\'' + existingKey + '\')">📋 COPY YOUR KEY</button>' +
+                '<p class="warning">Next key available in: ' + timeLeft + '</p>' +
+                '<p class="info">Use the key above - Reset won\'t give you a new one!</p>';
         }
 
         function showLock() {
@@ -53,24 +65,62 @@
                 '<p class="info">Click above → Complete verification → Get key automatically</p>';
         }
 
+        function copyKey(k) {
+            var key = k || document.getElementById('keyText').textContent;
+            if (key) navigator.clipboard.writeText(key).then(function() { alert('✅ Key copied!'); });
+        }
+
         function copyAndClose() {
             var k = document.getElementById('keyText').textContent;
             if (k) {
                 navigator.clipboard.writeText(k).then(function() {
-                    document.getElementById('copiedMsg').style.display = 'block';
-                    document.querySelector('button').style.display = 'none';
-                    // Tự đóng trang sau 2 giây
-                    setTimeout(function() {
-                        window.close();
-                        // Nếu không đóng được, hiện thông báo
-                        document.body.innerHTML = '<div class="box"><h2>✅ KEY COPIED!</h2><p style="color:#00ff96;font-size:18px;margin:20px">You can close this page now</p><p class="info">Paste the key into your Roblox script</p></div>';
-                    }, 2000);
+                    document.querySelector('button').textContent = '✅ COPIED!';
+                    document.querySelector('button').style.background = '#00cc78';
                 });
             }
         }
 
+        // ============================================
+        // LOGIC CHÍNH: KIỂM TRA KEY CŨ TRONG GIỜ NÀY
+        // ============================================
         if (hash && hash.length > 5) {
-            showKey(generateKey());
+            var now = new Date();
+            var currentHour = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + ('0'+now.getHours()).slice(-2);
+            
+            // Lấy key đã lưu
+            var saved = localStorage.getItem('dedsec_key_data');
+            
+            if (saved) {
+                var data = JSON.parse(saved);
+                
+                // Nếu key cùng giờ → Hiện key cũ, không cho lấy mới
+                if (data.hour === currentHour) {
+                    var nextHour = new Date();
+                    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+                    var diff = Math.floor((nextHour - now) / 1000);
+                    var m = Math.floor(diff / 60);
+                    var s = diff % 60;
+                    showAlreadyClaimed(data.key, m + 'm ' + s + 's');
+                } else {
+                    // Sang giờ mới → Tạo key mới
+                    var newKey = generateKey();
+                    localStorage.setItem('dedsec_key_data', JSON.stringify({
+                        key: newKey,
+                        hour: currentHour,
+                        time: now.getTime()
+                    }));
+                    showKey(newKey);
+                }
+            } else {
+                // Chưa có key → Tạo key mới
+                var newKey = generateKey();
+                localStorage.setItem('dedsec_key_data', JSON.stringify({
+                    key: newKey,
+                    hour: currentHour,
+                    time: now.getTime()
+                }));
+                showKey(newKey);
+            }
         } else {
             showLock();
         }
